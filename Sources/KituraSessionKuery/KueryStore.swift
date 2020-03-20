@@ -85,9 +85,9 @@ public class KueryStore: Store {
                             return
                         }
                         callback(nil)
-
                     }
                 }
+                callback(nil)
              }
         }
     }
