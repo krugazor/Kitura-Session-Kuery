@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Dispatch
 import KituraSession
 import SwiftKuery
 
@@ -12,7 +13,7 @@ public class KueryStore: Store {
 
     public class Sessions: Table {
         let tableName = "Sessions"
-        let id = Column("id", Char.self, primaryKey: true)
+        let id = Column("id", String.self, primaryKey: true)
         let data = Column("data", String.self)
     }
 
@@ -47,9 +48,11 @@ public class KueryStore: Store {
                 print("Could not create connection to database in all to load(sessionId: \(sessionId).  \(error?.localizedDescription ?? "")")
                 return
             }
+            let loadSem = DispatchSemaphore(value: 0)
             connection.execute(query: query) { result in
                 guard result.success else {
                     callback(nil, result.asError as NSError?)
+                    loadSem.signal()
                     return
                 }
     
@@ -61,9 +64,10 @@ public class KueryStore: Store {
                         }
                     }
                     callback(nil, nil)
+                    loadSem.signal()
                 }
     
-                // TODO: does this need to wait until completion?
+                loadSem.wait()
             }
         }
     }
